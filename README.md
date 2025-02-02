@@ -71,4 +71,4 @@ Google Maps is a highly dynamic platform that frequently updates its interface a
 - **Scrolling Issues:** Dynamic content loading can affect the scroll behavior of the thumbnail container.
 - **Timeouts:** Elements may take longer to load during periods of high traffic or due to network conditions.
 
----
+*This repository is provided as a starting point. Users are encouraged to modify and enhance the code according to their specific requirements and changes in the Google Maps interface.*
