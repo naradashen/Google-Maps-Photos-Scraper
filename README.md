@@ -24,15 +24,23 @@ This is a Python tool designed to extract high-quality image URLs from the Googl
 
    ```bash
    git clone https://github.com/naradashen/Google-Maps-Photos-Scraper.git
+   ```
+
+   ```bash
    cd google-maps-image-scraper
+   ```
 
 2. **Activate the virtual environment:**
     
     ```bash
     python -m venv venv
-    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    ```
 
-3. **Install rependencies:**
+    ```bash
+    source venv/bin/activate  # On Windows: venv\Scripts\activate
+    ```
+
+3. **Install dependencies:**
 
     ```bash
     pip3 install selenium requests
