@@ -44,3 +44,36 @@ This is a Python tool designed to extract high-quality image URLs from the Googl
 
     ```bash
     pip3 install selenium requests
+
+---
+
+---
+
+## 🚀 Usage
+
+1. **Update settings:**
+
+- Open 'main.py' and adjust parameters as desired.
+- Change the target location by modifying the 'place_name' variable in the main() function (line 29).
+
+2. **Run the scraper:**
+
+    ```bash
+    python3 main.py
+    ```
+
+3. **Results:**
+
+- The extracted image URLs will be saved as a JSON file in the 'extracted_data' folder.
+
+---
+
+---
+
+## ⚠️ Note on Dynamic Content & Error Handling
+
+Google Maps is a highly dynamic platform that frequently updates its interface and underlying DOM structure. As a result, you might encounter occasional errors such as:
+
+- **Element Not Found:** The photo gallery button or thumbnail container may have updated attributes.
+- **Scrolling Issues:** Dynamic content loading can affect the scroll behavior of the thumbnail container.
+- **Timeouts:** Elements may take longer to load during periods of high traffic or due to network conditions.
