@@ -15,9 +15,6 @@ This is a Python tool designed to extract high-quality image URLs from the Googl
 
 ---
 
-
----
-
 ## ⚙️ Installation
 
 1. **Clone the repository:**
@@ -47,8 +44,6 @@ This is a Python tool designed to extract high-quality image URLs from the Googl
 
 ---
 
----
-
 ## 🚀 Usage
 
 1. **Update settings:**
@@ -65,8 +60,6 @@ This is a Python tool designed to extract high-quality image URLs from the Googl
 3. **Results:**
 
 - The extracted image URLs will be saved as a JSON file in the 'extracted_data' folder.
-
----
 
 ---
 
