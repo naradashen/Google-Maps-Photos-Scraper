@@ -26,7 +26,7 @@ except Exception as e:
     driver.quit()
     exit()
 
-place_name = "Technical University Berlin"
+place_name = "caltech"
 search_box.send_keys(place_name)
 search_box.send_keys(Keys.RETURN)
 time.sleep(5)
