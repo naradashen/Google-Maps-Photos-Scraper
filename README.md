@@ -33,7 +33,7 @@ This is a Python tool designed to extract high-quality image URLs from the Googl
 2. **Activate the virtual environment:**
     
     ```bash
-    python -m venv venv
+    python3 -m venv venv
     ```
 
     ```bash
