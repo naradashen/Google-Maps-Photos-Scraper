@@ -26,7 +26,7 @@ except Exception as e:
     driver.quit()
     exit()
 
-place_name = "galle dutch fort fortress"
+place_name = "unawatuna beach"
 search_box.send_keys(place_name)
 search_box.send_keys(Keys.RETURN)
 time.sleep(5)
