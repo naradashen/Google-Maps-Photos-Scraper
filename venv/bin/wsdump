@@ -1,4 +1,4 @@
-#!/home/upali/maps/venv/bin/python3
+#!/home/upali/Google-Maps-Photos-Scraper/venv/bin/python3
 # -*- coding: utf-8 -*-
 import re
 import sys
