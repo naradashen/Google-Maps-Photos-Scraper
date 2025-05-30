@@ -8,100 +8,89 @@ import os
 import json
 import re
 
-# Initialize WebDriver
+# === CONFIG ===
+PLACE_NAME    = "caltech"
+OUTPUT_DIR    = "extracted_data"
+OUTPUT_FILE   = os.path.join(OUTPUT_DIR, "image_urls.json")
+SCROLL_STEP   = 2000    # px per scroll
+SCROLL_PAUSE  = 1.0    # seconds
+MAX_NO_CHANGE = 5     # stop after this many scrolls with no new content
+
+# prepare
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 options = webdriver.ChromeOptions()
-options.add_argument("--headless")  # Uncomment for headless mode
+options.add_argument("--headless")
 driver = webdriver.Chrome(options=options)
+wait   = WebDriverWait(driver, 20)
 
-# Navigate to Google Maps
+# 1) search place
 driver.get("https://www.google.com/maps")
-
-# Wait for the search box and perform the search
-try:
-    search_box = WebDriverWait(driver, 20).until(
-        EC.presence_of_element_located((By.ID, "searchboxinput"))
-    )
-except Exception as e:
-    print("Search box not found:", e)
-    driver.quit()
-    exit()
-
-place_name = "unawatuna beach"
-search_box.send_keys(place_name)
-search_box.send_keys(Keys.RETURN)
+search = wait.until(EC.presence_of_element_located((By.ID, "searchboxinput")))
+search.send_keys(PLACE_NAME, Keys.RETURN)
 time.sleep(5)
 
-# Click the "All" button to open the full photo gallery
-try:
-    all_button = WebDriverWait(driver, 20).until(
-        EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='All']"))
-    )
-    all_button.click()
-    time.sleep(5)  # Allow gallery to open
-except Exception as e:
-    print("Error clicking 'All' button:", e)
+# 2) open “All” gallery
+all_btn = wait.until(EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='All']")))
+all_btn.click()
+time.sleep(5)
 
-# Create or open the output folder for JSON file
-output_folder = "extracted_data"
-if not os.path.exists(output_folder):
-    os.makedirs(output_folder)
+# 3) locate the gallery panel
+gallery = wait.until(EC.presence_of_element_located((
+    By.CSS_SELECTOR,
+    "div.m6QErb.DxyBCb.kA9KIf.dS8AEf.XiKgde"
+)))
 
-# Initialize list to store image URLs
-image_urls = []
+# 4) prepare extraction
+URL_RE = re.compile(
+    r'url\((?:&quot;|["\']?)(https?://lh3\.googleusercontent\.com[^)"\']+)(?:&quot;|["\']?)\)'
+)
 
-# Function to extract image URLs from the left-side panel
-def extract_image_urls():
-    try:
-        # Locate all div elements with the class "Uf0tqf loaded" in the left-side panel
-        image_divs = driver.find_elements(By.CSS_SELECTOR, "div.Uf0tqf.loaded")
-        for div in image_divs:
-            # Extract the style attribute
-            style = div.get_attribute("style")
-            # Use regex to extract the URL from the background-image property
-            match = re.search(r'url\("([^"]+)"\)', style)
-            if match:
-                image_url = match.group(1)
-                # Validate that the URL is a Google Photos URL
-                if image_url.startswith("https://lh5.googleusercontent.com") and image_url not in image_urls:
-                    image_urls.append(image_url)
-                    print(f"Extracted image URL: {image_url}")
-    except Exception as e:
-        print("Error extracting image URLs:", e)
+image_urls = set()
 
-# Function to click the Next button
-def click_next_button():
-    try:
-        next_button = WebDriverWait(driver, 10).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR, "button[aria-label='Next']"))
-        )
-        next_button.click()
-        time.sleep(2)  # Wait for the next image to load
-        return True
-    except Exception as e:
-        print("Error clicking Next button:", e)
-        return False
+def extract_from_gallery():
+    # every tile is <a class="OKAoZd"> → contains <div.U39Pmb role="img">
+    tiles = gallery.find_elements(By.CSS_SELECTOR, "a.OKAoZd div.U39Pmb[role='img']")
+    for tile in tiles:
+        style = tile.get_attribute("style") or ""
+        m = URL_RE.search(style)
+        if m:
+            url = m.group(1)
+            if url not in image_urls:
+                image_urls.add(url)
+                print(url)
+        # nested high-res
+        nested = tile.find_elements(By.CSS_SELECTOR, "div.Uf0tqf.loaded[style*='background-image']")
+        for div in nested:
+            s2 = div.get_attribute("style") or ""
+            m2 = URL_RE.search(s2)
+            if m2:
+                url2 = m2.group(1)
+                if url2 not in image_urls:
+                    image_urls.add(url2)
+                    print(url2)
 
-# Extract image URLs from all photos
-max_images = 50  # Set a maximum number of images to capture
-for i in range(max_images):
-    try:
-        # Extract URLs from the left-side panel
-        extract_image_urls()
+# 5) smooth, incremental scroll until no new tiles
+last_height = driver.execute_script("return arguments[0].scrollHeight", gallery)
+no_change   = 0
 
-        # Click the Next button to move to the next image
-        if not click_next_button():
-            break  # Stop if there are no more images
-    except Exception as e:
-        print(f"Error processing image {i+1}: {e}")
-        break
+while True:
+    extract_from_gallery()
+    # scroll down
+    driver.execute_script("arguments[0].scrollBy(0, arguments[1]);", gallery, SCROLL_STEP)
+    time.sleep(SCROLL_PAUSE)
 
-# Save the image URLs to a JSON file
-json_filename = os.path.join(output_folder, "image_urls.json")
-with open(json_filename, "w") as f:
-    json.dump(image_urls, f, indent=4)
-print(f"Image URLs saved to {json_filename}")
+    new_height = driver.execute_script("return arguments[0].scrollHeight", gallery)
+    if new_height == last_height:
+        no_change += 1
+        if no_change >= MAX_NO_CHANGE:
+            break
+    else:
+        last_height = new_height
+        no_change    = 0
 
-# Close the browser after extraction
+# 6) save results
+with open(OUTPUT_FILE, "w") as f:
+    json.dump(sorted(image_urls), f, indent=2)
+
+print(f"Done! Extracted {len(image_urls)} URLs → {OUTPUT_FILE}")
 driver.quit()
-
-print("Image URL extraction complete.")
